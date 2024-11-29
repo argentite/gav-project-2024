@@ -63,6 +63,22 @@ import { mat4 } from "./glmatrix/index.js";
   gl.vertexAttribIPointer(0, vtpfile.piece[0].points.ncomp, gl.INT, false, 0, 0);
   gl.enableVertexAttribArray(0);
 
+  const relationBuffer = gl.createBuffer();
+  {
+    const relationIndices = new Uint16Array(2 * vtpfile.piece[0].ncells);
+    for (let i = 0; i < vtpfile.piece[0].ncells; i++) {
+      relationIndices[2 * i + 0] = vtpfile.piece[0].cellData.get("SourceSaddle").data[i];
+      relationIndices[2 * i + 1] = vtpfile.piece[0].cellData.get("DestinationExtremum").data[i];
+    }
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, relationIndices, gl.STATIC_DRAW);
+  }
+
+  const edgeBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
+
   function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -84,8 +100,17 @@ import { mat4 } from "./glmatrix/index.js";
     mat4.multiply(cameraMatrix, projectionMatrix, viewMatrix);
     gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "cameraMatrix"), false, cameraMatrix);
 
+    gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 3.0);
+    gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 1.0, 1.0);
     gl.drawArrays(gl.POINTS, 0, vtpfile.piece[0].points.length);
-    // gl.drawArrays(gl.POINTS, 0, 1);
+
+    gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 0.0, 1.0, 0.0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
+    gl.drawElements(gl.LINES, vtpfile.piece[0].cells.connectivity.length, gl.UNSIGNED_INT, 0);
+
+    gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 0.0, 0.0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
+    gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
   }
 
   draw();
