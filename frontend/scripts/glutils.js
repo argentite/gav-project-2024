@@ -6,7 +6,6 @@
  */
 export async function loadShaderModule(gl, type, path) {
   let source = await (await fetch(path)).text();
-  console.log(`Shader source: ${source}`);
 
   const shader = gl.createShader(type);
   gl.shaderSource(shader, source);

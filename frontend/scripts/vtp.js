@@ -45,9 +45,7 @@ class DataArray {
     for (let j = 0; j < this.ncomp; j++) {
       avg[j] /= this.length;
     }
-    console.log(avg);
     avg = avg.map(Math.round);
-    console.log(avg);
 
     idx = 0;
     for (let i = 0; i < this.length; i++) {
@@ -55,7 +53,6 @@ class DataArray {
         this.data[idx++] -= avg[j];
       }
     }
-    console.log(this.data);
   }
 }
 
@@ -131,7 +128,5 @@ export class VTP {
     for (const piece of this.piece) {
       piece.points.recenter();
     }
-
-    console.log(this.piece);
   }
 }
