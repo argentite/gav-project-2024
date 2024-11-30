@@ -14,32 +14,11 @@ import { ArcballCamera, Controller } from "./webgl-util.js";
 
   console.log(vtpfile);
 
-
-  const cameraDistanceSlider = document.querySelector("#camera_distance");
-  cameraDistanceSlider.addEventListener("input", (event) => {
-    event.target.nextElementSibling.value = event.target.value;
-    draw();
-  });
-
-
   const cameraFovSlider = document.querySelector("#camera_fov");
   cameraFovSlider.addEventListener("input", (event) => {
     event.target.nextElementSibling.value = event.target.value;
     draw();
   });
-
-  const cameraYawSlider = document.querySelector("#camera_yaw");
-  cameraYawSlider.addEventListener("input", (event) => {
-    event.target.nextElementSibling.value = event.target.value;
-    draw();
-  });
-
-  const cameraPitchSlider = document.querySelector("#camera_pitch");
-  cameraPitchSlider.addEventListener("input", (event) => {
-    event.target.nextElementSibling.value = event.target.value;
-    draw();
-  });
-  
 
   const canvas = document.querySelector("canvas");
   const gl = canvas.getContext("webgl2", {
@@ -51,7 +30,7 @@ import { ArcballCamera, Controller } from "./webgl-util.js";
   }
   
   // Initialize Arcball camera
-  const eye = vec3.set(vec3.create(), 0.5, 0.5, 1.5);
+  const eye = vec3.set(vec3.create(), 0, 0, 50);
   const center = vec3.set(vec3.create(), 0, 0, 0);
   const up = vec3.set(vec3.create(), 0.0, 1.0, 0.0);
   
