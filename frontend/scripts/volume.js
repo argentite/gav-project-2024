@@ -8,10 +8,11 @@ export class Raycaster {
       "Neghip": "neghip_64x64x64_uint8",
       // "Boston Teapot": "boston_teapot_256x256x178_uint8",
       // "Engine": "engine_256x256x128_uint8",
-      // "Bonsai": "bonsai_256x256x256_uint8",
+      "Bonsai": "bonsai_256x256x256_uint8",
       // "Foot": "foot_256x256x256_uint8",
       // "Skull": "skull_256x256x256_uint8",
       "Aneurysm": "aneurism_256x256x256_uint8",
+      "Zeiss": "zeiss_680x680x680_uint8",
     };
 
     this.colormaps = {
@@ -83,7 +84,7 @@ export class Raycaster {
 
     this.samplingRate = 1.0;
     this.targetFrameTime = 1000 / 60;
-    
+
     this.volumeChangeCallback = null;
   }
 
