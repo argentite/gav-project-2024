@@ -1,7 +1,7 @@
 import { VTP } from "./vtp.js";
 import { loadShaderProgram } from "./glutils.js";
 import { vec3, mat4 } from "./glmatrix/index.js";
-import { ArcballCamera, Controller } from "./webgl-util.js";
+import { ArcballCamera, Controller, hexToRGBf } from "./webgl-util.js";
 import { Raycaster } from "./volume.js";
 
 
@@ -28,6 +28,10 @@ import { Raycaster } from "./volume.js";
   const displayPointsCheckbox = document.querySelector("#display_points");
   const displayConnectivityCheckbox = document.querySelector("#display_connectivity");
   const displayRelationsCheckbox = document.querySelector("#display_relations");
+
+  const pointsColorInput = document.querySelector("#color_points");
+  const connectivityColorInput = document.querySelector("#color_connectivity");
+  const relationsColorInput = document.querySelector("#color_relations");
 
   const canvas = document.querySelector("canvas");
   const gl = canvas.getContext("webgl2", {
@@ -154,7 +158,7 @@ import { Raycaster } from "./volume.js";
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
   }
-  
+
   raycaster.volumeChangeCallback = setup;
 
   function draw() {
@@ -204,19 +208,22 @@ import { Raycaster } from "./volume.js";
     gl.uniform1f(gl.getUniformLocation(shaderProgram, "scaleFactor"), scaleFactor);
 
     if (displayPointsCheckbox.checked) {
+      const color = hexToRGBf(pointsColorInput.value);
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
       gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 5.0);
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 0.0, 0.0);
       gl.drawArrays(gl.POINTS, 0, vtpfile.piece[0].points.length);
     }
 
     if (displayConnectivityCheckbox.checked) {
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 0.0, 1.0, 0.0);
+      const color = hexToRGBf(connectivityColorInput.value);
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
       gl.drawElements(gl.LINES, vtpfile.piece[0].cells.connectivity.length, gl.UNSIGNED_INT, 0);
     }
 
     if (displayRelationsCheckbox.checked) {
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 1.0, 0.0);
+      const color = hexToRGBf(relationsColorInput.value);
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
       gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
     }
