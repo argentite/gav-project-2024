@@ -25,11 +25,13 @@ import { Raycaster } from "./volume.js";
     draw();
   });
 
-  const displayPointsCheckbox = document.querySelector("#display_points");
+  const displayPointsSaddleCheckbox = document.querySelector("#display_points_saddle");
+  const displayPointsExtremumCheckbox = document.querySelector("#display_points_extremum");
   const displayConnectivityCheckbox = document.querySelector("#display_connectivity");
   const displayRelationsCheckbox = document.querySelector("#display_relations");
 
-  const pointsColorInput = document.querySelector("#color_points");
+  const pointsSaddleColorInput = document.querySelector("#color_points_saddle");
+  const pointsExtremumColorInput = document.querySelector("#color_points_extremum");
   const connectivityColorInput = document.querySelector("#color_connectivity");
   const relationsColorInput = document.querySelector("#color_relations");
 
@@ -102,6 +104,17 @@ import { Raycaster } from "./volume.js";
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
+  let saddleBuffer = gl.createBuffer();
+  {
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, saddleBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cellData.get("SourceSaddle").data, gl.STATIC_DRAW);
+  }
+  let extremumBuffer = gl.createBuffer();
+  {
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, extremumBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cellData.get("DestinationExtremum").data, gl.STATIC_DRAW);
+  }
+
   let relationBuffer = gl.createBuffer();
   {
     const relationIndices = new Uint16Array(2 * vtpfile.piece[0].ncells);
@@ -141,6 +154,11 @@ import { Raycaster } from "./volume.js";
     gl.cullFace(gl.FRONT);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, saddleBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cellData.get("SourceSaddle").data, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, extremumBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cellData.get("DestinationExtremum").data, gl.STATIC_DRAW);
 
     relationBuffer = gl.createBuffer();
     {
@@ -207,11 +225,20 @@ import { Raycaster } from "./volume.js";
 
     gl.uniform1f(gl.getUniformLocation(shaderProgram, "scaleFactor"), scaleFactor);
 
-    if (displayPointsCheckbox.checked) {
-      const color = hexToRGBf(pointsColorInput.value);
+    if (displayPointsSaddleCheckbox.checked) {
+      const color = hexToRGBf(pointsSaddleColorInput.value);
       gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
       gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 5.0);
-      gl.drawArrays(gl.POINTS, 0, vtpfile.piece[0].points.length);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, saddleBuffer);
+      gl.drawElements(gl.POINTS, vtpfile.piece[0].cellData.get("SourceSaddle").data.length, gl.UNSIGNED_INT, 0);
+    }
+
+    if (displayPointsExtremumCheckbox.checked) {
+      const color = hexToRGBf(pointsExtremumColorInput.value);
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
+      gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 5.0);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, extremumBuffer);
+      gl.drawElements(gl.POINTS, vtpfile.piece[0].cellData.get("DestinationExtremum").data.length, gl.UNSIGNED_INT, 0);
     }
 
     if (displayConnectivityCheckbox.checked) {
