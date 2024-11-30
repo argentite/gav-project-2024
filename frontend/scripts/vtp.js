@@ -45,16 +45,19 @@ class DataArray {
     for (let j = 0; j < this.ncomp; j++) {
       avg[j] /= this.length;
     }
-    avg = avg.map(Math.round);
 
+    let datanew = new Float32Array(this.data.length);
     idx = 0;
     for (let i = 0; i < this.length; i++) {
       for (let j = 0; j < this.ncomp; j++) {
-        this.data[idx++] -= avg[j];
+        datanew[idx] = this.data[idx] - avg[j];
+        idx++;
       }
     }
+
+    this.data = datanew;
   }
-  
+
   compute_bounding_box() {
     let bb = Array(this.ncomp).fill([1000, -1000]);
     for (let i = 0; i < this.data.length; i += this.ncomp) {
