@@ -109,9 +109,20 @@ import { Raycaster } from "./volume.js";
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
 
-  var scaleFactor = 128;
-
   function draw() {
+    if (raycaster.volume_dimension) {
+      var scaleFactor = raycaster.volume_dimension[0];
+      for(let i = 0; i < raycaster.volume_dimension.length; i++) {
+        const f = raycaster.volume_dimension[i];
+        if (scaleFactor != f) {
+          console.error("Volume is not a cube :C", raycaster.volume_dimension);
+          break;
+        }
+      }
+    } else {
+      var scaleFactor = 1;
+    }
+
     {
       const { width, height } = canvas.getBoundingClientRect();
       gl.canvas.width = width;

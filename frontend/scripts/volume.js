@@ -165,6 +165,7 @@ export class Raycaster {
     this.loadVolume(this.volumes[vol], (file, dataBuffer) => {
       var m = file.match(this.fileRegex);
       var volDims = [parseInt(m[2]), parseInt(m[3]), parseInt(m[4])];
+      this.volume_dimension = volDims;
 
       var tex = gl.createTexture();
       gl.activeTexture(gl.TEXTURE0);
