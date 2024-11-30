@@ -7,11 +7,11 @@ import { Raycaster } from "./volume.js";
 
 (async function () {
   // ================= VTP ============================
-  const vtpRequest = await fetch("/hydrogen_atom.vtp");
+  const vtpRequest = await fetch("vtps/hydrogen_atom_128x128x128_uint8.vtp");
   if (!vtpRequest.ok) {
     console.error(`Failed to download VTP file: ${vtpRequest.status}`);
   }
-  const vtpfile = new VTP(await vtpRequest.text());
+  let vtpfile = new VTP(await vtpRequest.text());
 
   console.log(vtpfile);
 
@@ -83,10 +83,10 @@ import { Raycaster } from "./volume.js";
   const shaderProgram = await loadShaderProgram(gl, './shaders/point.vs', './shaders/plain.fs');
   gl.useProgram(shaderProgram);
 
-  const vao = gl.createVertexArray();
+  let vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
 
-  const positionBuffer = gl.createBuffer();
+  let positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, vtpfile.piece[0].points.data, gl.STATIC_DRAW);
 
@@ -98,7 +98,7 @@ import { Raycaster } from "./volume.js";
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-  const relationBuffer = gl.createBuffer();
+  let relationBuffer = gl.createBuffer();
   {
     const relationIndices = new Uint16Array(2 * vtpfile.piece[0].ncells);
     for (let i = 0; i < vtpfile.piece[0].ncells; i++) {
@@ -110,9 +110,52 @@ import { Raycaster } from "./volume.js";
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, relationIndices, gl.STATIC_DRAW);
   }
 
-  const edgeBuffer = gl.createBuffer();
+  let edgeBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
+
+  async function setup(name) {
+    // ================= VTP ============================
+    const vtpRequest = await fetch("vtps/" + name + ".vtp");
+    if (!vtpRequest.ok) {
+      console.error(`Failed to download VTP file: ${vtpRequest.status}`);
+    }
+    vtpfile = new VTP(await vtpRequest.text());
+    console.log(vtpfile);
+
+    vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+
+    positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vtpfile.piece[0].points.data, gl.STATIC_DRAW);
+
+    gl.vertexAttribIPointer(0, vtpfile.piece[0].points.ncomp, gl.UNSIGNED_INT, false, 0, 0);
+    gl.enableVertexAttribArray(0);
+
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.FRONT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+    relationBuffer = gl.createBuffer();
+    {
+      const relationIndices = new Uint16Array(2 * vtpfile.piece[0].ncells);
+      for (let i = 0; i < vtpfile.piece[0].ncells; i++) {
+        relationIndices[2 * i + 0] = vtpfile.piece[0].cellData.get("SourceSaddle").data[i];
+        relationIndices[2 * i + 1] = vtpfile.piece[0].cellData.get("DestinationExtremum").data[i];
+      }
+
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, relationIndices, gl.STATIC_DRAW);
+    }
+
+    edgeBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
+  }
+  
+  raycaster.volumeChangeCallback = setup;
 
   function draw() {
     const startTime = performance.now();

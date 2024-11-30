@@ -3,15 +3,15 @@ import { Shader } from "./webgl-util.js";
 export class Raycaster {
   async init(gl) {
     this.volumes = {
-      "Hydrogen Atom": "scalarfield/hydrogen_atom_128x128x128_uint8.raw",
-      "Fuel": "scalarfield/fuel_64x64x64_uint8.raw",
-      "Neghip": "scalarfield/neghip_64x64x64_uint8.raw",
-      "Boston Teapot": "scalarfield/boston_teapot_256x256x178_uint8.raw",
-      "Engine": "scalarfield/engine_256x256x128_uint8.raw",
-      "Bonsai": "scalarfield/bonsai_256x256x256_uint8.raw",
-      "Foot": "scalarfield/foot_256x256x256_uint8.raw",
-      "Skull": "scalarfield/skull_256x256x256_uint8.raw",
-      "Aneurysm": "scalarfield/aneurism_256x256x256_uint8.raw",
+      "Hydrogen Atom": "hydrogen_atom_128x128x128_uint8",
+      "Fuel": "fuel_64x64x64_uint8",
+      "Neghip": "neghip_64x64x64_uint8",
+      // "Boston Teapot": "boston_teapot_256x256x178_uint8",
+      // "Engine": "engine_256x256x128_uint8",
+      // "Bonsai": "bonsai_256x256x256_uint8",
+      // "Foot": "foot_256x256x256_uint8",
+      // "Skull": "skull_256x256x256_uint8",
+      "Aneurysm": "aneurism_256x256x256_uint8",
     };
 
     this.colormaps = {
@@ -42,7 +42,7 @@ export class Raycaster {
 
     this.volSelector = null;
     this.colormapSelector = null;
-    this.fileRegex = /.*\/(\w+)_(\d+)x(\d+)x(\d+)_(\w+)\.*/;
+    this.fileRegex = /.*(\w+)_(\d+)x(\d+)x(\d+)_(\w+)*/;
 
     this.gl = gl;
     this.volumeTexture = null;
@@ -83,6 +83,8 @@ export class Raycaster {
 
     this.samplingRate = 1.0;
     this.targetFrameTime = 1000 / 60;
+    
+    this.volumeChangeCallback = null;
   }
 
   setVolSelector(volSelector) {
@@ -111,7 +113,7 @@ export class Raycaster {
     var m = file.match(this.fileRegex);
     var volDims = [parseInt(m[2]), parseInt(m[3]), parseInt(m[4])];
 
-    var url = file;
+    var url = "/scalarfield/" + file + ".raw";
     var req = new XMLHttpRequest();
     // var loadingProgressText = document.getElementById("loadingText");
     // var loadingProgressBar = document.getElementById("loadingProgressBar");
@@ -150,6 +152,9 @@ export class Raycaster {
       return;
     const vol = this.volSelector.value;
     this.selectVolume(vol);
+    if (this.volumeChangeCallback != null) {
+      this.volumeChangeCallback(this.volumes[vol]);
+    }
   }
 
   onColormapSelect() {
