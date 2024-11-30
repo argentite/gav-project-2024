@@ -54,6 +54,19 @@ class DataArray {
       }
     }
   }
+  
+  compute_bounding_box() {
+    let bb = Array(this.ncomp).fill([1000, -1000]);
+    for (let i = 0; i < this.data.length; i += this.ncomp) {
+      for (let j = 0; j < this.ncomp; j++) {
+        const comp_val = this.data[i + j];
+        bb[j] = [Math.min(bb[j][0], comp_val), Math.max(bb[j][1], comp_val)];
+      }
+    }
+    this.bounding_box = bb;
+
+    return bb;
+  }
 }
 
 class Piece {
@@ -127,6 +140,7 @@ export class VTP {
 
     for (const piece of this.piece) {
       piece.points.recenter();
+      piece.points.compute_bounding_box();
     }
   }
 }

@@ -4,8 +4,10 @@ in ivec3 inputPosition;
 
 uniform mat4 cameraMatrix;
 uniform float pointSize;
+uniform float scaleFactor;
 
 void main() {
-  gl_Position = cameraMatrix * vec4(vec3(inputPosition), 1.0);
+  vec3 offset = vec3(0.5, 0.5, 0.5);
+  gl_Position = cameraMatrix * vec4((vec3(inputPosition) / scaleFactor) + offset, 1.0);
   gl_PointSize = pointSize;
 }
