@@ -38,7 +38,8 @@ import { Raycaster } from "./volume.js";
   const volSelector = document.getElementById("volumeList");
   const colormapSelector = document.getElementById("colormapList");
 
-  const raycaster = new Raycaster(gl);
+  const raycaster = new Raycaster();
+  await raycaster.init(gl);
   raycaster.setVolSelector(volSelector);
   raycaster.setColormapSelector(colormapSelector);
 

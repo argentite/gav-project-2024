@@ -1,8 +1,7 @@
-import { rcVertShader, rcFragShader } from "./rc-shaders.js";
 import { Shader } from "./webgl-util.js";
 
 export class Raycaster {
-  constructor(gl) {
+  async init(gl) {
     this.volumes = {
       "Hydrogen Atom": "jwbav8s3wmmxd5x/hydrogen_atom_128x128x128_uint8.raw",
       "Fuel": "7d87jcsh0qodk78/fuel_64x64x64_uint8.raw",
@@ -57,6 +56,8 @@ export class Raycaster {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
 
+    const rcVertShader = await (await fetch("./shaders/volume.vs")).text();
+    const rcFragShader = await (await fetch("./shaders/volume.fs")).text();
     this.shader = new Shader(gl, rcVertShader, rcFragShader);
     this.shader.use(gl);
     gl.uniform1i(this.shader.uniforms["volume"], 0);
