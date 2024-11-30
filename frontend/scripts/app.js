@@ -1,8 +1,10 @@
 import { VTP } from "./vtp.js";
 import { loadShaderProgram } from "./glutils.js";
-import { mat4 } from "./glmatrix/index.js";
+import { vec3, mat4 } from "./glmatrix/index.js";
+import { ArcballCamera, Controller } from "./webgl-util.js";
 
 (async function () {
+
   // ================= VTP ============================
   const vtpRequest = await fetch("/hydrogen_atom.vtp");
   if (!vtpRequest.ok) {
@@ -37,6 +39,7 @@ import { mat4 } from "./glmatrix/index.js";
     event.target.nextElementSibling.value = event.target.value;
     draw();
   });
+  
 
   const canvas = document.querySelector("canvas");
   const gl = canvas.getContext("webgl2", {
@@ -46,6 +49,28 @@ import { mat4 } from "./glmatrix/index.js";
     console.error("Unable to initialize WebGL. Your browser or machine may not support it.");
     return;
   }
+  
+  // Initialize Arcball camera
+  const eye = vec3.set(vec3.create(), 0.5, 0.5, 1.5);
+  const center = vec3.set(vec3.create(), 0, 0, 0);
+  const up = vec3.set(vec3.create(), 0.0, 1.0, 0.0);
+  
+  const camera = new ArcballCamera(eye, center, up, 2, [canvas.width, canvas.height]);
+  
+  // Initialize controller
+	var controller = new Controller();
+	controller.mousemove = function(prev, cur, evt) {
+		if (evt.buttons == 1) {
+			camera.rotate(prev, cur);
+
+		} else if (evt.buttons == 2) {
+			camera.pan([cur[0] - prev[0], prev[1] - cur[1]]);
+		}
+	};
+	controller.wheel = function(amt) { camera.zoom(amt); };
+	controller.pinch = controller.wheel;
+	controller.twoFingerDrag = function(drag) { camera.pan(drag); };
+  controller.registerForCanvas(canvas);
 
   gl.clearColor(0.0, 0.0, 0.5, 1.0);
 
@@ -85,16 +110,16 @@ import { mat4 } from "./glmatrix/index.js";
     const projectionMatrix = mat4.create();
     mat4.perspective(projectionMatrix, cameraFovSlider.value, gl.canvas.width / gl.canvas.height, 0.1, 10000);
 
-    const viewMatrix = mat4.create();
-    mat4.lookAt(viewMatrix,
-      new Float32Array([
-        cameraDistanceSlider.value * Math.cos(cameraYawSlider.value),
-        cameraDistanceSlider.value * Math.sin(cameraPitchSlider.value),
-        cameraDistanceSlider.value * Math.sin(cameraYawSlider.value)
-      ]),
-      new Float32Array([0, 0, 0]),
-      new Float32Array([0, 1, 0])
-    );
+    const viewMatrix = camera.camera; // mat4.create();
+    // mat4.lookAt(viewMatrix,
+    //   new Float32Array([
+    //     cameraDistanceSlider.value * Math.cos(cameraYawSlider.value),
+    //     cameraDistanceSlider.value * Math.sin(cameraPitchSlider.value),
+    //     cameraDistanceSlider.value * Math.sin(cameraYawSlider.value)
+    //   ]),
+    //   new Float32Array([0, 0, 0]),
+    //   new Float32Array([0, 1, 0])
+    // );
 
     const cameraMatrix = mat4.create();
     mat4.multiply(cameraMatrix, projectionMatrix, viewMatrix);
@@ -114,4 +139,6 @@ import { mat4 } from "./glmatrix/index.js";
   }
 
   draw();
+  // Keep drawing
+  setInterval(draw, 1000/60);
 })();
