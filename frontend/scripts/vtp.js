@@ -142,7 +142,7 @@ export class VTP {
     }
 
     for (const piece of this.piece) {
-      piece.points.recenter();
+      // piece.points.recenter();
       piece.points.compute_bounding_box();
     }
   }

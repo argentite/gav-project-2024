@@ -84,7 +84,7 @@ import { Raycaster } from "./volume.js";
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, vtpfile.piece[0].points.data, gl.STATIC_DRAW);
 
-  gl.vertexAttribPointer(0, vtpfile.piece[0].points.ncomp, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribIPointer(0, vtpfile.piece[0].points.ncomp, gl.UNSIGNED_INT, false, 0, 0);
   gl.enableVertexAttribArray(0);
 
   gl.enable(gl.CULL_FACE);
@@ -108,11 +108,7 @@ import { Raycaster } from "./volume.js";
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
 
-  var scaleFactor = 0;
-  for (let comp = 0; comp < vtpfile.piece[0].points.ncomp; comp++) {
-    const bc = vtpfile.piece[0].points.bounding_box[comp];
-    scaleFactor = Math.max(scaleFactor, bc[1] - bc[0]);
-  }
+  var scaleFactor = 128;
 
   function draw() {
     {
@@ -146,8 +142,8 @@ import { Raycaster } from "./volume.js";
     gl.uniform1f(gl.getUniformLocation(shaderProgram, "scaleFactor"), scaleFactor);
 
     if (displayPointsCheckbox.checked) {
-      gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 3.0);
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 1.0, 1.0);
+      gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 5.0);
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 0.0, 0.0);
       gl.drawArrays(gl.POINTS, 0, vtpfile.piece[0].points.length);
     }
 
@@ -158,7 +154,7 @@ import { Raycaster } from "./volume.js";
     }
 
     if (displayRelationsCheckbox.checked) {
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 0.0, 0.0);
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 1.0, 0.0);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
       gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
     }
