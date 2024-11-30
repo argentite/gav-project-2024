@@ -15,6 +15,10 @@ import { Raycaster } from "./volume.js";
 
   console.log(vtpfile);
 
+  const gpuInfoMonitor = document.querySelector("#gpuinfo");
+  const frameTimeMonitor = document.querySelector("#frametime");
+  const frameRateMonitor = document.querySelector("#framerate");
+
   const cameraFovSlider = document.querySelector("#camera_fov");
   cameraFovSlider.addEventListener("input", (event) => {
     event.target.nextElementSibling.value = event.target.value;
@@ -33,6 +37,7 @@ import { Raycaster } from "./volume.js";
     console.error("Unable to initialize WebGL. Your browser or machine may not support it.");
     return;
   }
+  gpuInfoMonitor.innerHTML = `${gl.getParameter(gl.VENDOR)} ${gl.getParameter(gl.RENDERER)}`;
 
   // Ray caster stuff
   const volSelector = document.getElementById("volumeList");
@@ -110,9 +115,11 @@ import { Raycaster } from "./volume.js";
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
 
   function draw() {
+    const startTime = performance.now();
+
     if (raycaster.volume_dimension) {
       var scaleFactor = raycaster.volume_dimension[0];
-      for(let i = 0; i < raycaster.volume_dimension.length; i++) {
+      for (let i = 0; i < raycaster.volume_dimension.length; i++) {
         const f = raycaster.volume_dimension[i];
         if (scaleFactor != f) {
           console.error("Volume is not a cube :C", raycaster.volume_dimension);
@@ -170,9 +177,17 @@ import { Raycaster } from "./volume.js";
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
       gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
     }
+
+    gl.finish();
+    const endTime = performance.now();
+    const deltaTime = endTime - startTime;
+    frameTimeMonitor.innerHTML = deltaTime.toPrecision(5);
+    frameRateMonitor.innerHTML = Math.round(1000.0 / deltaTime);
+
+    requestAnimationFrame(draw);
   }
 
   draw();
   // Keep drawing
-  setInterval(draw, 1000 / 60);
+  requestAnimationFrame(draw);
 })();
