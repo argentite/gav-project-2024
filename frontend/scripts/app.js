@@ -20,6 +20,10 @@ import { ArcballCamera, Controller } from "./webgl-util.js";
     draw();
   });
 
+  const displayPointsCheckbox = document.querySelector("#display_points");
+  const displayConnectivityCheckbox = document.querySelector("#display_connectivity");
+  const displayRelationsCheckbox = document.querySelector("#display_relations");
+
   const canvas = document.querySelector("canvas");
   const gl = canvas.getContext("webgl2", {
     preserveDrawingBuffer: true
@@ -28,27 +32,27 @@ import { ArcballCamera, Controller } from "./webgl-util.js";
     console.error("Unable to initialize WebGL. Your browser or machine may not support it.");
     return;
   }
-  
+
   // Initialize Arcball camera
   const eye = vec3.set(vec3.create(), 0, 0, 50);
   const center = vec3.set(vec3.create(), 0, 0, 0);
   const up = vec3.set(vec3.create(), 0.0, 1.0, 0.0);
-  
-  const camera = new ArcballCamera(eye, center, up, 2, [canvas.width, canvas.height]);
-  
-  // Initialize controller
-	var controller = new Controller();
-	controller.mousemove = function(prev, cur, evt) {
-		if (evt.buttons == 1) {
-			camera.rotate(prev, cur);
 
-		} else if (evt.buttons == 2) {
-			camera.pan([cur[0] - prev[0], prev[1] - cur[1]]);
-		}
-	};
-	controller.wheel = function(amt) { camera.zoom(amt); };
-	controller.pinch = controller.wheel;
-	controller.twoFingerDrag = function(drag) { camera.pan(drag); };
+  const camera = new ArcballCamera(eye, center, up, 2, [canvas.width, canvas.height]);
+
+  // Initialize controller
+  var controller = new Controller();
+  controller.mousemove = function (prev, cur, evt) {
+    if (evt.buttons == 1) {
+      camera.rotate(prev, cur);
+
+    } else if (evt.buttons == 2) {
+      camera.pan([cur[0] - prev[0], prev[1] - cur[1]]);
+    }
+  };
+  controller.wheel = function (amt) { camera.zoom(amt); };
+  controller.pinch = controller.wheel;
+  controller.twoFingerDrag = function (drag) { camera.pan(drag); };
   controller.registerForCanvas(canvas);
 
   gl.clearColor(0.0, 0.0, 0.5, 1.0);
@@ -84,6 +88,13 @@ import { ArcballCamera, Controller } from "./webgl-util.js";
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
 
   function draw() {
+    {
+      const { width, height } = canvas.getBoundingClientRect();
+      gl.canvas.width = width;
+      gl.canvas.height = height;
+      gl.viewport(0, 0, width, height);
+    }
+
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const projectionMatrix = mat4.create();
@@ -104,20 +115,26 @@ import { ArcballCamera, Controller } from "./webgl-util.js";
     mat4.multiply(cameraMatrix, projectionMatrix, viewMatrix);
     gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "cameraMatrix"), false, cameraMatrix);
 
-    gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 3.0);
-    gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 1.0, 1.0);
-    gl.drawArrays(gl.POINTS, 0, vtpfile.piece[0].points.length);
+    if (displayPointsCheckbox.checked) {
+      gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 3.0);
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 1.0, 1.0);
+      gl.drawArrays(gl.POINTS, 0, vtpfile.piece[0].points.length);
+    }
 
-    gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 0.0, 1.0, 0.0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
-    gl.drawElements(gl.LINES, vtpfile.piece[0].cells.connectivity.length, gl.UNSIGNED_INT, 0);
+    if (displayConnectivityCheckbox.checked) {
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 0.0, 1.0, 0.0);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
+      gl.drawElements(gl.LINES, vtpfile.piece[0].cells.connectivity.length, gl.UNSIGNED_INT, 0);
+    }
 
-    gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 0.0, 0.0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
-    gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
+    if (displayRelationsCheckbox.checked) {
+      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), 1.0, 0.0, 0.0);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
+      gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
+    }
   }
 
   draw();
   // Keep drawing
-  setInterval(draw, 1000/60);
+  setInterval(draw, 1000 / 60);
 })();
