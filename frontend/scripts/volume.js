@@ -63,6 +63,7 @@ export class Raycaster {
     this.shader.use(gl);
     gl.uniform1i(this.shader.uniforms["volume"], 0);
     gl.uniform1i(this.shader.uniforms["colormap"], 1);
+    gl.uniform1i(this.shader.uniforms["depth"], 2);
     gl.uniform1f(this.shader.uniforms["dt_scale"], 1.0);
 
     // init colormap texture and volumn texture
@@ -86,6 +87,12 @@ export class Raycaster {
     this.targetFrameTime = 1000 / 60;
 
     this.volumeChangeCallback = null;
+  }
+  
+  set_resolution(width, height) {
+    const gl = this.gl;
+    gl.uniform1i(this.shader.uniforms["canvas_width"], width);
+    gl.uniform1i(this.shader.uniforms["canvas_height"], height);
   }
 
   setVolSelector(volSelector) {

@@ -4,12 +4,20 @@ precision highp int;
 precision highp float;
 uniform highp sampler3D volume;
 uniform highp sampler2D colormap;
+uniform highp sampler2D depth;
+uniform int canvas_width;
+uniform int canvas_height;
 uniform ivec3 volume_dims;
 uniform float dt_scale;
 
 in vec3 vray_dir;
 flat in vec3 transformed_eye;
 out vec4 color;
+
+
+// vec2 resolution = vec2(canvas_width, canvas_height);
+// ivec2 pos = ivec2(vec2(gl_FragCoord.x, gl_FragCoord.y));
+// fragColor = vec4(texelFetch(depthSampler, pos, 0).xyz, 1.0);
 
 vec2 intersect_box(vec3 orig, vec3 dir) {
 	const vec3 box_min = vec3(0);
@@ -69,4 +77,13 @@ void main(void) {
     color.r = linear_to_srgb(color.r);
     color.g = linear_to_srgb(color.g);
     color.b = linear_to_srgb(color.b);
+
+	// vec2 resolution = vec2(canvas_width, canvas_height);
+	// ivec2 pos = ivec2(vec2(gl_FragCoord.x, gl_FragCoord.y));
+	// float c = texelFetch(depth, pos, 0).x;
+	// if (c < 0.5) {
+	// 	color.r = 1.0f;
+	// 	color.g = 0.0f;
+	// 	color.b = 0.0f;
+	// }
 }

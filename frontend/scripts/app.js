@@ -5,6 +5,30 @@ import { ArcballCamera, Controller, hexToRGBf } from "./webgl-util.js";
 import { Raycaster } from "./volume.js";
 
 
+function create_fb_and_tex(gl, width, height) {
+  const targetTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+   
+  {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+   
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, targetTexture, 0);
+  
+  const depthBuffer = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+
+  return {fbtex: targetTexture, fb: fb};
+}
+
 (async function () {
   // ================= VTP ============================
   const vtpRequest = await fetch("vtps/hydrogen_atom_128x128x128_uint8.vtp");
@@ -87,6 +111,7 @@ import { Raycaster } from "./volume.js";
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
   const shaderProgram = await loadShaderProgram(gl, './shaders/point.vs', './shaders/plain.fs');
+  const depthProgram = await loadShaderProgram(gl, './shaders/depth.vs', './shaders/depth.fs');
   gl.useProgram(shaderProgram);
 
   let vao = gl.createVertexArray();
@@ -130,6 +155,8 @@ import { Raycaster } from "./volume.js";
   let edgeBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
+  
+  let {fb, fbtex} = create_fb_and_tex(gl, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
 
   async function setup(name) {
     // ================= VTP ============================
@@ -202,6 +229,71 @@ import { Raycaster } from "./volume.js";
       gl.viewport(0, 0, width, height);
     }
 
+    {
+      // Depth buffer pass
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+
+      gl.clearColor(1.0, 1.0, 1.0, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      const projectionMatrix = mat4.create();
+      mat4.perspective(projectionMatrix, cameraFovSlider.value, gl.canvas.width / gl.canvas.height, 0.1, 10000);
+
+      const viewMatrix = camera.camera;
+
+      const projViewMatrix = mat4.create();
+      mat4.multiply(projViewMatrix, projectionMatrix, viewMatrix);
+
+      const cameraMatrix = mat4.create();
+
+      gl.useProgram(depthProgram);
+      gl.bindVertexArray(vao);
+
+      mat4.multiply(cameraMatrix, projectionMatrix, viewMatrix);
+      gl.uniformMatrix4fv(gl.getUniformLocation(depthProgram, "cameraMatrix"), false, cameraMatrix);
+
+      gl.uniform1f(gl.getUniformLocation(depthProgram, "scaleFactor"), scaleFactor);
+
+      if (displayPointsSaddleCheckbox.checked) {
+        const color = hexToRGBf(pointsSaddleColorInput.value);
+        gl.uniform3f(gl.getUniformLocation(depthProgram, "color"), color[0], color[1], color[2]);
+        gl.uniform1f(gl.getUniformLocation(depthProgram, "pointSize"), 5.0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, saddleBuffer);
+        gl.drawElements(gl.POINTS, vtpfile.piece[0].cellData.get("SourceSaddle").data.length, gl.UNSIGNED_INT, 0);
+      }
+
+      if (displayPointsExtremumCheckbox.checked) {
+        const color = hexToRGBf(pointsExtremumColorInput.value);
+        gl.uniform3f(gl.getUniformLocation(depthProgram, "color"), color[0], color[1], color[2]);
+        gl.uniform1f(gl.getUniformLocation(depthProgram, "pointSize"), 5.0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, extremumBuffer);
+        gl.drawElements(gl.POINTS, vtpfile.piece[0].cellData.get("DestinationExtremum").data.length, gl.UNSIGNED_INT, 0);
+      }
+
+      if (displayConnectivityCheckbox.checked) {
+        const color = hexToRGBf(connectivityColorInput.value);
+        gl.uniform3f(gl.getUniformLocation(depthProgram, "color"), color[0], color[1], color[2]);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
+        gl.drawElements(gl.LINES, vtpfile.piece[0].cells.connectivity.length, gl.UNSIGNED_INT, 0);
+      }
+
+      if (displayRelationsCheckbox.checked) {
+        const color = hexToRGBf(relationsColorInput.value);
+        gl.uniform3f(gl.getUniformLocation(depthProgram, "color"), color[0], color[1], color[2]);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
+        gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
+      }
+
+    }
+    
+    // Draw to canvas
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, fbtex);
+
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const projectionMatrix = mat4.create();
@@ -215,6 +307,9 @@ import { Raycaster } from "./volume.js";
     const cameraMatrix = mat4.create();
 
     var eye = [camera.invCamera[12], camera.invCamera[13], camera.invCamera[14]]
+    const w = canvas.getBoundingClientRect().width;
+    const h = canvas.getBoundingClientRect().width;
+    raycaster.set_resolution(w, h);
     raycaster.draw(projViewMatrix, eye);
 
     gl.useProgram(shaderProgram);
