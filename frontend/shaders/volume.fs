@@ -81,7 +81,9 @@ void main(void) {
 
 		float camera_z = (proj_view * vec4(p, 1.0)).z + visibility_bias;
 		if (camera_z > pixel_depth) {
-			break;
+			if (pixel_depth < 1.0f) {
+				break;
+			}
 		}
 
 		p += ray_dir * dt;
