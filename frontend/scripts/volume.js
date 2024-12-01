@@ -9,8 +9,8 @@ export class Raycaster {
       // "Boston Teapot": "boston_teapot_256x256x178_uint8",
       // "Engine": "engine_256x256x128_uint8",
       "Bonsai": "bonsai_256x256x256_uint8",
-      // "Foot": "foot_256x256x256_uint8",
-      // "Skull": "skull_256x256x256_uint8",
+      "Foot": "foot_256x256x256_uint8",
+      "Skull": "skull_256x256x256_uint8",
       "Aneurysm": "aneurism_256x256x256_uint8",
       "Zeiss": "zeiss_680x680x680_uint8",
     };
