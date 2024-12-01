@@ -51,6 +51,12 @@ function create_fb_and_tex(gl, width, height) {
 
   const displayVisibilityBias = document.querySelector("#visibility_bias");
 
+  const opacityPointsSaddle = document.querySelector("#opacity_points_saddle");
+  const opacityPointsExtremum = document.querySelector("#opacity_points_extremum");
+  const opacityConnectivity = document.querySelector("#opacity_connectivity");
+  const opacityRelations = document.querySelector("#opacity_relations");
+
+
   const displayPointsSaddleCheckbox = document.querySelector("#display_points_saddle");
   const displayPointsExtremumCheckbox = document.querySelector("#display_points_extremum");
   const displayConnectivityCheckbox = document.querySelector("#display_connectivity");
@@ -109,8 +115,6 @@ function create_fb_and_tex(gl, width, height) {
   controller.twoFingerDrag = function (drag) { camera.pan(drag); };
   controller.registerForCanvas(canvas);
 
-  gl.clearColor(1.0, 1.0, 1.0, 1.0);
-
   const shaderProgram = await loadShaderProgram(gl, './shaders/point.vs', './shaders/plain.fs');
   const depthProgram = await loadShaderProgram(gl, './shaders/depth.vs', './shaders/depth.fs');
   gl.useProgram(shaderProgram);
@@ -128,7 +132,7 @@ function create_fb_and_tex(gl, width, height) {
   gl.enable(gl.CULL_FACE);
   gl.cullFace(gl.FRONT);
   gl.enable(gl.BLEND);
-  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
   let saddleBuffer = gl.createBuffer();
   {
@@ -325,7 +329,8 @@ function create_fb_and_tex(gl, width, height) {
 
     if (displayPointsSaddleCheckbox.checked) {
       const color = hexToRGBf(pointsSaddleColorInput.value);
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
+      const opacity = parseFloat(opacityPointsSaddle.value);
+      gl.uniform4f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2], opacity);
       gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 5.0);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, saddleBuffer);
       gl.drawElements(gl.POINTS, vtpfile.piece[0].cellData.get("SourceSaddle").data.length, gl.UNSIGNED_INT, 0);
@@ -333,7 +338,8 @@ function create_fb_and_tex(gl, width, height) {
 
     if (displayPointsExtremumCheckbox.checked) {
       const color = hexToRGBf(pointsExtremumColorInput.value);
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
+      const opacity = parseFloat(opacityPointsExtremum.value);
+      gl.uniform4f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2], opacity);
       gl.uniform1f(gl.getUniformLocation(shaderProgram, "pointSize"), 5.0);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, extremumBuffer);
       gl.drawElements(gl.POINTS, vtpfile.piece[0].cellData.get("DestinationExtremum").data.length, gl.UNSIGNED_INT, 0);
@@ -341,14 +347,16 @@ function create_fb_and_tex(gl, width, height) {
 
     if (displayConnectivityCheckbox.checked) {
       const color = hexToRGBf(connectivityColorInput.value);
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
+      const opacity = parseFloat(opacityConnectivity.value);
+      gl.uniform4f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2], opacity);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
       gl.drawElements(gl.LINES, vtpfile.piece[0].cells.connectivity.length, gl.UNSIGNED_INT, 0);
     }
 
     if (displayRelationsCheckbox.checked) {
       const color = hexToRGBf(relationsColorInput.value);
-      gl.uniform3f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2]);
+      const opacity = parseFloat(opacityRelations.value);
+      gl.uniform4f(gl.getUniformLocation(shaderProgram, "color"), color[0], color[1], color[2], opacity);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
       gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
     }
