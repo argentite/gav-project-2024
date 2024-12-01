@@ -9,6 +9,8 @@ uniform int canvas_width;
 uniform int canvas_height;
 uniform ivec3 volume_dims;
 uniform float dt_scale;
+uniform mat4 proj_view;
+uniform float visibility_bias;
 
 in vec3 vray_dir;
 flat in vec3 transformed_eye;
@@ -52,6 +54,10 @@ float linear_to_srgb(float x) {
 }
 
 void main(void) {
+	vec2 resolution = vec2(canvas_width, canvas_height);
+	ivec2 pos = ivec2(vec2(gl_FragCoord.x, gl_FragCoord.y));
+	float pixel_depth = texelFetch(depth, pos, 0).x;
+
 	vec3 ray_dir = normalize(vray_dir);
 	vec2 t_hit = intersect_box(transformed_eye, ray_dir);
 	if (t_hit.x > t_hit.y) {
@@ -72,18 +78,15 @@ void main(void) {
 		if (color.a >= 0.95) {
 			break;
 		}
+
+		float camera_z = (proj_view * vec4(p, 1.0)).z + visibility_bias;
+		if (camera_z > pixel_depth) {
+			break;
+		}
+
 		p += ray_dir * dt;
 	}
     color.r = linear_to_srgb(color.r);
     color.g = linear_to_srgb(color.g);
     color.b = linear_to_srgb(color.b);
-
-	// vec2 resolution = vec2(canvas_width, canvas_height);
-	// ivec2 pos = ivec2(vec2(gl_FragCoord.x, gl_FragCoord.y));
-	// float c = texelFetch(depth, pos, 0).x;
-	// if (c < 0.5) {
-	// 	color.r = 1.0f;
-	// 	color.g = 0.0f;
-	// 	color.b = 0.0f;
-	// }
 }

@@ -8,10 +8,10 @@ import { Raycaster } from "./volume.js";
 function create_fb_and_tex(gl, width, height) {
   const targetTexture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, targetTexture);
-   
+
   {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-   
+
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -20,13 +20,13 @@ function create_fb_and_tex(gl, width, height) {
   const fb = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, targetTexture, 0);
-  
+
   const depthBuffer = gl.createRenderbuffer();
   gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
   gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
 
-  return {fbtex: targetTexture, fb: fb};
+  return { fbtex: targetTexture, fb: fb };
 }
 
 (async function () {
@@ -48,6 +48,8 @@ function create_fb_and_tex(gl, width, height) {
     event.target.nextElementSibling.value = event.target.value;
     draw();
   });
+
+  const displayVisibilityBias = document.querySelector("#visibility_bias");
 
   const displayPointsSaddleCheckbox = document.querySelector("#display_points_saddle");
   const displayPointsExtremumCheckbox = document.querySelector("#display_points_extremum");
@@ -155,8 +157,8 @@ function create_fb_and_tex(gl, width, height) {
   let edgeBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, edgeBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, vtpfile.piece[0].cells.connectivity.data, gl.STATIC_DRAW);
-  
-  let {fb, fbtex} = create_fb_and_tex(gl, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+
+  let { fb, fbtex } = create_fb_and_tex(gl, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
 
   async function setup(name) {
     // ================= VTP ============================
@@ -287,7 +289,7 @@ function create_fb_and_tex(gl, width, height) {
       }
 
     }
-    
+
     // Draw to canvas
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.activeTexture(gl.TEXTURE2);
@@ -305,12 +307,6 @@ function create_fb_and_tex(gl, width, height) {
     mat4.multiply(projViewMatrix, projectionMatrix, viewMatrix);
 
     const cameraMatrix = mat4.create();
-
-    var eye = [camera.invCamera[12], camera.invCamera[13], camera.invCamera[14]]
-    const w = canvas.getBoundingClientRect().width;
-    const h = canvas.getBoundingClientRect().width;
-    raycaster.set_resolution(w, h);
-    raycaster.draw(projViewMatrix, eye);
 
     gl.useProgram(shaderProgram);
     gl.bindVertexArray(vao);
@@ -349,6 +345,13 @@ function create_fb_and_tex(gl, width, height) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, relationBuffer);
       gl.drawElements(gl.LINES, 2 * vtpfile.piece[0].ncells, gl.UNSIGNED_SHORT, 0);
     }
+
+    raycaster.setVisibilityBias(parseFloat(displayVisibilityBias.value));
+    var eye = [camera.invCamera[12], camera.invCamera[13], camera.invCamera[14]]
+    const w = canvas.getBoundingClientRect().width;
+    const h = canvas.getBoundingClientRect().width;
+    raycaster.set_resolution(w, h);
+    raycaster.draw(projViewMatrix, eye);
 
     gl.finish();
     const endTime = performance.now();

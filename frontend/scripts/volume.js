@@ -65,6 +65,7 @@ export class Raycaster {
     gl.uniform1i(this.shader.uniforms["colormap"], 1);
     gl.uniform1i(this.shader.uniforms["depth"], 2);
     gl.uniform1f(this.shader.uniforms["dt_scale"], 1.0);
+    gl.uniform1f(this.shader.uniforms["visibility_bias"], 0.0);
 
     // init colormap texture and volumn texture
     var colormapImage = new Image();
@@ -88,11 +89,17 @@ export class Raycaster {
 
     this.volumeChangeCallback = null;
   }
-  
+
   set_resolution(width, height) {
     const gl = this.gl;
     gl.uniform1i(this.shader.uniforms["canvas_width"], width);
     gl.uniform1i(this.shader.uniforms["canvas_height"], height);
+  }
+
+  setVisibilityBias(visibility_bias) {
+    const gl = this.gl;
+    this.shader.use(gl);
+    gl.uniform1f(this.shader.uniforms["visibility_bias"], visibility_bias);
   }
 
   setVolSelector(volSelector) {
