@@ -93,7 +93,6 @@ function create_fb_and_tex(gl, width, height) {
     const h = canvas.getBoundingClientRect().width;
     var camera = new ArcballCamera(eye, center, up, 2, [w, h]);
   };
-  window.onresize = resetCamera;
 
   // Initialize controller
   var controller = new Controller();
@@ -160,6 +159,14 @@ function create_fb_and_tex(gl, width, height) {
 
   let { fb, fbtex } = create_fb_and_tex(gl, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
 
+  window.onresize = () => {
+    resetCamera();
+    gl.deleteTexture(fbtex);
+    const ret = create_fb_and_tex(gl, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+    fb = ret.fb;
+    fbtex = ret.fbtex;
+  };
+  
   async function setup(name) {
     // ================= VTP ============================
     const vtpRequest = await fetch("vtps/" + name + ".vtp");
