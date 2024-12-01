@@ -56,7 +56,7 @@ float linear_to_srgb(float x) {
 void main(void) {
 	vec2 resolution = vec2(canvas_width, canvas_height);
 	ivec2 pos = ivec2(vec2(gl_FragCoord.x, gl_FragCoord.y));
-	float pixel_depth = texelFetch(depth, pos, 0).x;
+	float pixel_depth = texelFetch(depth, pos, 0).x * 1000.0f;
 
 	vec3 ray_dir = normalize(vray_dir);
 	vec2 t_hit = intersect_box(transformed_eye, ray_dir);
@@ -81,9 +81,7 @@ void main(void) {
 
 		float camera_z = (proj_view * vec4(p, 1.0)).z + visibility_bias;
 		if (camera_z > pixel_depth) {
-			if (pixel_depth < 1.0f) {
-				break;
-			}
+			break;
 		}
 
 		p += ray_dir * dt;
